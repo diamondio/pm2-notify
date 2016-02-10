@@ -10,6 +10,7 @@
     "nodemailer-markdown": "^1.0.0",
     "nodemailer-smtp-transport": "^1.0.3",
     "pm2": "^0.12.16",
+    "postmark": "^1.2.1",
     "yamljs": "^0.2.3"
   },
   "devDependencies": {},

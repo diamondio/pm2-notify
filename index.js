@@ -1,3 +1,4 @@
+var fs = require('fs');
 var pm2 = require('pm2')
 var hostname = require('os').hostname()
 var nodemailer = require('nodemailer')
@@ -9,9 +10,10 @@ var async = require('async')
 var util = require('util')
 var p = require('path')
 
-var transporter = nodemailer.createTransport(require('nodemailer-smtp-transport')(config.smtp))
+var postmark = require("postmark");
 
-transporter.use('compile', markdown({useEmbeddedImages: true}))
+// Example request
+var client = new postmark.Client(config.smtp.token);
 
 var queue = []
 var timeout = null
@@ -36,21 +38,26 @@ function sendMail(opts) {
     throw new ReferenceError("No text or subject to be mailed")
   }
 
-  var opts = {
-    from: opts.from || config.mail.from,
-    to: opts.to ? opts.to : config.mail.to,
-    subject: opts.subject,
-    markdown: opts.text,
-    attachments: opts.attachments || []
-  }
-    
-  transporter.sendMail(opts, function(err, info) {
-    if(err) {
-      console.error(err) 
-    } 
+  var attachments = opts.attachments || [];
+  attachments = attachments.map(function (x) {
+    return {
+        "ContentType": "text/plain",
+        "Name": x.filename,
+        "Content": new Buffer(fs.readFileSync(x.path)).toString('base64'),
+    };
+  });
 
-    console.log('Mail sent', info)
-  })
+  var opts = {
+    From: opts.from || config.mail.from,
+    To: opts.to ? opts.to : config.mail.to,
+    Subject: opts.subject,
+    TextBody: opts.text,
+    Attachments: attachments,
+  };
+
+  client.sendEmail(opts, function (err) {
+    if (err) console.log('%j', err);
+  });
 }
 
 /**
