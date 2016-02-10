@@ -45,6 +45,8 @@ function sendMail(opts) {
         "Name": x.filename,
         "Content": new Buffer(fs.readFileSync(x.path)).toString('base64'),
     };
+  }).filter(function (x) {
+    return x.Content.length > 0;
   });
 
   var opts = {
